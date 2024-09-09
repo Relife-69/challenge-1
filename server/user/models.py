@@ -1,11 +1,16 @@
-import os, sys, platform
-from django.db import models
-from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+import base64
+import os
+import platform
+import requests
+import subprocess
+import sys
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
+from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.conf import settings
-import base64, requests, subprocess
 
 
 class UserManager(BaseUserManager):
@@ -43,6 +48,7 @@ class User(AbstractBaseUser):
     email = models.EmailField(null=False, blank=False, unique=True)
     first_name = models.CharField(max_length=50, blank=False, null=False, default='Default first name')
     last_name = models.CharField(max_length=50, blank=False, null=False, default='Default last name')
+    ethereum_wallet_address = models.CharField(max_length=42, blank=True, null=True)
     is_admin = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

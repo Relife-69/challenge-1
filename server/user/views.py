@@ -1,9 +1,15 @@
+import requests
 from django.contrib.auth import authenticate
 from django.conf import settings
 from django.middleware import csrf
+from rest_framework.response import Response
 from rest_framework import exceptions as rest_exceptions, response, decorators as rest_decorators, permissions as rest_permissions
 from rest_framework_simplejwt import tokens, views as jwt_views, serializers as jwt_serializers, exceptions as jwt_exceptions
 from user import serializers, models
+
+
+# from user import serializers, models
+
 
 
 def get_user_tokens(user):
@@ -80,8 +86,8 @@ def logoutView(request):
         res.delete_cookie(settings.SIMPLE_JWT['AUTH_COOKIE_REFRESH'])
         res.delete_cookie("X-CSRFToken")
         res.delete_cookie("csrftoken")
-        res["X-CSRFToken"]=None
-        
+        res["X-CSRFToken"] = None
+
         return res
     except:
         raise rest_exceptions.ParseError("Invalid token")
@@ -128,3 +134,27 @@ def user(request):
 
     serializer = serializers.UserSerializer(user)
     return response.Response(serializer.data)
+
+
+def get_eth_balance(wallet_address):
+    api_key = "4VRVRN73RT463CKRRG41CVY3ZKYCJK34EI"  # Obtain an API key from Etherscan or any other service
+    url = f"https://api.etherscan.io/api?module=account&action=balance&address={wallet_address}&tag=latest&apikey={api_key}"
+    response = requests.get(url)
+    data = response.json()
+    if data["status"] == "1":
+        balance_in_wei = int(data["result"])
+        balance_in_eth = balance_in_wei / (10**18)
+        return balance_in_eth
+    return None
+
+
+@rest_decorators.api_view(["GET"])
+@rest_decorators.permission_classes([rest_permissions.IsAuthenticated])
+def wallet_balance_view(request):
+    user = request.user
+    if user.is_authenticated:
+        if hasattr(user, 'ethereum_wallet_address') and user.ethereum_wallet_address:
+            balance = get_eth_balance(user.ethereum_wallet_address)
+            return Response({"balance": balance})
+        return Response({"balance": None, "message": "No wallet address found."})
+    return Response({"error": "User not authenticated"}, status=401)

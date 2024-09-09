@@ -1,18 +1,17 @@
 from rest_framework import serializers
-from django.conf import settings
 from django.contrib.auth import get_user_model
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
-
     password2 = serializers.CharField(style={"input_type": "password"})
 
     class Meta:
         model = get_user_model()
-        fields = ("first_name", "last_name", "email", "password", "password2")
+        fields = ("first_name", "last_name", "email", "password", "password2", "ethereum_wallet_address")
         extra_kwargs = {
             "password": {"write_only": True},
-            "password2": {"write_only": True}
+            "password2": {"write_only": True},
+            "ethereum_wallet_address": {"required": False}
         }
 
     def save(self):
@@ -20,6 +19,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
             email=self.validated_data["email"],
             first_name=self.validated_data["first_name"],
             last_name=self.validated_data["last_name"],
+            ethereum_wallet_address=self.validated_data.get("ethereum_wallet_address")
         )
 
         password = self.validated_data["password"]
